@@ -1,0 +1,10 @@
+.git
+.github
+.idea
+target
+HELP.md
+GEMINI.md
+README.md
+*.iml
+*.ipr
+*.iws

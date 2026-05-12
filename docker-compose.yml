@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: k2cut-postgres
+    environment:
+      POSTGRES_DB: k2cut
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d k2cut"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: k2cut-keycloak
+    command: ["start-dev"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "9090:8080"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: k2cut-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/k2cut
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_ISSUER_URI: http://keycloak:8080/realms/master
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/master/protocol/openid-connect/certs
+    ports:
+      - "7080:7080"
+
+volumes:
+  postgres_data:
