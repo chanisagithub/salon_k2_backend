@@ -10,8 +10,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
+public interface AppointmentRepository extends JpaRepository<Appointment, UUID>, JpaSpecificationExecutor<Appointment> {
     List<Appointment> findByCustomerId(UUID customerId);
     List<Appointment> findByBarberIdAndStartTimeBetween(UUID barberId, OffsetDateTime start, OffsetDateTime end);
     

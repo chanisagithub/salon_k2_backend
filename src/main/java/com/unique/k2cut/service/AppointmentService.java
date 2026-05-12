@@ -11,6 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -91,6 +96,45 @@ public class AppointmentService {
         appointment = appointmentRepository.save(appointment);
 
         return mapToResponse(appointment);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AppointmentResponse> searchAppointments(
+            String query, 
+            LocalDate date, 
+            AppointmentStatus status, 
+            Pageable pageable) {
+        
+        Specification<Appointment> spec = (root, q, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (date != null) {
+                OffsetDateTime startOfDay = date.atStartOfDay().atOffset(ZoneOffset.UTC);
+                OffsetDateTime endOfDay = date.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+                predicates.add(cb.between(root.get("startTime"), startOfDay, endOfDay));
+            }
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            if (query != null && !query.isBlank()) {
+                String searchPattern = "%" + query.toLowerCase() + "%";
+                
+                // Search in customer name, barber name, or service name
+                Predicate customerFirst = cb.like(cb.lower(root.get("customer").get("firstName")), searchPattern);
+                Predicate customerLast = cb.like(cb.lower(root.get("customer").get("lastName")), searchPattern);
+                Predicate barberFirst = cb.like(cb.lower(root.get("barber").get("user").get("firstName")), searchPattern);
+                Predicate barberLast = cb.like(cb.lower(root.get("barber").get("user").get("lastName")), searchPattern);
+                Predicate serviceName = cb.like(cb.lower(root.get("service").get("name")), searchPattern);
+                
+                predicates.add(cb.or(customerFirst, customerLast, barberFirst, barberLast, serviceName));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return appointmentRepository.findAll(spec, pageable).map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
