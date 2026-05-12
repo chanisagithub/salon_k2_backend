@@ -1,18 +1,14 @@
 package com.unique.k2cut.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "barber_schedules")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class BarberSchedule {
