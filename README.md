@@ -21,7 +21,7 @@ Spring Boot REST API for barber-shop booking and appointment management, with JW
 - **Web layer**: `com.unique.k2cut.web.rest`
   - `BookingController` (`/api/v1/booking/*`)
   - `PublicController` (`/api/v1/public/*`)
-  - `AdminController` + `AdminTestController` (`/api/v1/admin/*`)
+  - `AdminController`, `AdminServiceController`, `AdminBarberController` (`/api/v1/admin/*`)
 - **Service layer**: booking and domain rules (`service/*`)
 - **Persistence layer**: entities (`domain/entity`) + repositories (`repository/*`)
 - **Config layer**: security + JPA config (`config/*`)
@@ -204,9 +204,37 @@ docker run --name k2cut-api \
 
 ### Admin (`ROLE_ADMIN`)
 
+Appointments:
 - `GET /api/v1/admin/test`
 - `GET /api/v1/admin/appointments`
 - `PATCH /api/v1/admin/appointments/{id}/status?status=PENDING|CONFIRMED|CANCELLED|COMPLETED`
+
+Service management:
+- `GET /api/v1/admin/services` (includes inactive)
+- `GET /api/v1/admin/services/{id}`
+- `POST /api/v1/admin/services`
+- `PUT /api/v1/admin/services/{id}`
+- `DELETE /api/v1/admin/services/{id}` (soft-delete / deactivate)
+
+Barber & schedule management:
+- `GET /api/v1/admin/barbers` (includes inactive)
+- `POST /api/v1/admin/barbers`
+- `PUT /api/v1/admin/barbers/{id}`
+- `DELETE /api/v1/admin/barbers/{id}` (soft-delete / deactivate)
+- `GET /api/v1/admin/barbers/{id}/schedules`
+- `PUT /api/v1/admin/barbers/{id}/schedules` (replaces the full weekly schedule)
+
+> Migration `V2__Seed_Data.sql` seeds a starter catalogue (services, barbers, schedules) so the booking flow works immediately on a fresh database.
+
+### Error responses
+
+All errors return a consistent JSON body via the global exception handler:
+
+```json
+{ "timestamp": "...", "status": 400, "error": "Bad Request", "message": "Barber is already booked at this time" }
+```
+
+Validation failures additionally include a per-field `errors` map.
 
 ## Deployment Guide (Server)
 

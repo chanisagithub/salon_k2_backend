@@ -154,10 +154,8 @@ public class AppointmentService {
         
         OffsetDateTime startOfDay = date.atStartOfDay().atOffset(ZoneOffset.UTC);
         OffsetDateTime endOfDay = date.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
-        
-        // We'll need a new repository method or use a generic filter
-        return appointmentRepository.findAll().stream()
-                .filter(a -> !a.getStartTime().isBefore(startOfDay) && a.getStartTime().isBefore(endOfDay))
+
+        return appointmentRepository.findByStartTimeBetween(startOfDay, endOfDay).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

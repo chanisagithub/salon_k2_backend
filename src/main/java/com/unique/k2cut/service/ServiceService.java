@@ -1,6 +1,8 @@
 package com.unique.k2cut.service;
 
 import com.unique.k2cut.dto.ServiceDTO;
+import com.unique.k2cut.dto.ServiceRequest;
+import com.unique.k2cut.exception.ResourceNotFoundException;
 import com.unique.k2cut.repository.ServiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,10 +25,49 @@ public class ServiceService {
                 .collect(Collectors.toList());
     }
 
+    /** Admin view: includes inactive services. */
+    public List<ServiceDTO> getAllServices() {
+        return serviceRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
     public ServiceDTO getServiceById(UUID id) {
         return serviceRepository.findById(id)
                 .map(this::mapToDTO)
-                .orElseThrow(() -> new com.unique.k2cut.exception.ResourceNotFoundException("Service not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+    }
+
+    @Transactional
+    public ServiceDTO createService(ServiceRequest request) {
+        com.unique.k2cut.domain.entity.Service service = new com.unique.k2cut.domain.entity.Service();
+        apply(service, request);
+        return mapToDTO(serviceRepository.save(service));
+    }
+
+    @Transactional
+    public ServiceDTO updateService(UUID id, ServiceRequest request) {
+        com.unique.k2cut.domain.entity.Service service = serviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+        apply(service, request);
+        return mapToDTO(serviceRepository.save(service));
+    }
+
+    /** Soft-delete: deactivates the service so historical appointments stay intact. */
+    @Transactional
+    public void deactivateService(UUID id) {
+        com.unique.k2cut.domain.entity.Service service = serviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+        service.setIsActive(false);
+        serviceRepository.save(service);
+    }
+
+    private void apply(com.unique.k2cut.domain.entity.Service service, ServiceRequest request) {
+        service.setName(request.name());
+        service.setDescription(request.description());
+        service.setDurationMinutes(request.durationMinutes());
+        service.setPrice(request.price());
+        service.setIsActive(request.isActive() == null ? Boolean.TRUE : request.isActive());
     }
 
     private ServiceDTO mapToDTO(com.unique.k2cut.domain.entity.Service service) {

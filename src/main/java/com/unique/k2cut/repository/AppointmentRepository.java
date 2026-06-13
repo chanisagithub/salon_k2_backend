@@ -16,6 +16,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface AppointmentRepository extends JpaRepository<Appointment, UUID>, JpaSpecificationExecutor<Appointment> {
     List<Appointment> findByCustomerId(UUID customerId);
     List<Appointment> findByBarberIdAndStartTimeBetween(UUID barberId, OffsetDateTime start, OffsetDateTime end);
+    List<Appointment> findByStartTimeBetween(OffsetDateTime start, OffsetDateTime end);
+    boolean existsByService_Id(UUID serviceId);
+    boolean existsByBarber_Id(UUID barberId);
     
     boolean existsByBarberIdAndStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
             UUID barberId, 

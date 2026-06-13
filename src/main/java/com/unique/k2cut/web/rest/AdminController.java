@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -23,6 +24,11 @@ import java.util.UUID;
 public class AdminController {
 
     private final AppointmentService appointmentService;
+
+    @GetMapping("/test")
+    public ResponseEntity<Map<String, String>> testAdminAccess() {
+        return ResponseEntity.ok(Map.of("status", "Success", "message", "You have admin access!"));
+    }
 
     @GetMapping("/appointments")
     public ResponseEntity<Page<AppointmentResponse>> getAppointments(
